@@ -78,3 +78,20 @@ had not been written to disk. The old version ran perfectly.
 download script took one line and made every subsequent re-run safe. Adding
 it after a partial download would have meant reasoning about which files were
 complete.
+
+## Phase 2 — Silver build
+
+**Flag the source, not the cleaned column.** NULL_BLOCK was computed after
+mapping passenger_count 0 to NULL, so it absorbed the ZERO_PASSENGERS rows
+and over-counted by ~105k. A raw passenger column had to be preserved purely
+for flagging.
+
+**A business key needs the columns that make rows genuinely different.** The
+first trip_id hash excluded total_amount, collapsing 333 refund pairs — a +N
+charge and its -N reversal at the same instant — into single ids. For
+financial data, the signed amount is part of identity.
+
+**An invariant is worth more than a clean-looking table.** All three of these
+errors produced output that ran without complaint. Each was caught only
+because a specific assertion checked for it. The clean table is a by-product;
+the checks are the deliverable.
