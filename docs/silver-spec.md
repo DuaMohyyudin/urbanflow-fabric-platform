@@ -39,6 +39,26 @@ The seven non-quarantine flags are recorded on silver_trip rows.
 
 A row may carry multiple flags. Counts above overlap and do not sum.
 
+## Identity
+
+TLC data ships no unique key. We derive a deterministic one.
+
+**trip_id** = MD5 hash of the business-defining columns:
+tpep_pickup_datetime, tpep_dropoff_datetime, PULocationID,
+DOLocationID, trip_distance, fare_amount, VendorID.
+
+Properties:
+- Deterministic: the same trip always hashes to the same id, on every
+  run and in every engine. This is what makes incremental load safe and
+  invariant #2 (no id in both tables) checkable.
+- Not a business guarantee of uniqueness: if two genuinely identical
+  trips exist, they collide by design. Profiling found 1 probable
+  duplicate in 9.55M rows, so this is negligible and, arguably, correct —
+  a true duplicate should collapse.
+
+The hash uses the same columns as the Phase 1 duplicate check, so the
+two are consistent.
+
 ## Type contract
 
 | Column | Bronze | Silver | Reason |
